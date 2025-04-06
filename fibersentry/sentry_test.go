@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +28,7 @@ func Test_Sentry(t *testing.T) {
 			desc:   "panic",
 			path:   "/panic",
 			method: "GET",
-			handler: func(c *fiber.Ctx) error {
+			handler: func(c fiber.Ctx) error {
 				panic("test")
 			},
 			event: &sentry.Event{
@@ -49,7 +49,7 @@ func Test_Sentry(t *testing.T) {
 			path:   "/post",
 			method: "POST",
 			body:   "payload",
-			handler: func(c *fiber.Ctx) error {
+			handler: func(c fiber.Ctx) error {
 				hub := GetHubFromContext(c)
 				hub.CaptureMessage("post: " + string(c.Body()))
 				return nil
@@ -73,7 +73,7 @@ func Test_Sentry(t *testing.T) {
 			desc:   "get",
 			path:   "/get",
 			method: "GET",
-			handler: func(c *fiber.Ctx) error {
+			handler: func(c fiber.Ctx) error {
 				hub := GetHubFromContext(c)
 				hub.CaptureMessage("get")
 				return nil
@@ -96,7 +96,7 @@ func Test_Sentry(t *testing.T) {
 			path:   "/post/large",
 			method: "POST",
 			body:   strings.Repeat("Large", 3*1024), // 15 KB
-			handler: func(c *fiber.Ctx) error {
+			handler: func(c fiber.Ctx) error {
 				hub := GetHubFromContext(c)
 				hub.CaptureMessage(fmt.Sprintf("post: %d KB", len(c.Body())/1024))
 				return nil
@@ -122,7 +122,7 @@ func Test_Sentry(t *testing.T) {
 			path:   "/post/body-ignored",
 			method: "POST",
 			body:   "client sends, fasthttp always reads, SDK reports",
-			handler: func(c *fiber.Ctx) error {
+			handler: func(c fiber.Ctx) error {
 				hub := GetHubFromContext(c)
 				hub.CaptureMessage("body ignored")
 				return nil
@@ -160,7 +160,7 @@ func Test_Sentry(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			app.Add(tC.method, tC.path, tC.handler)
+			app.Add([]string{tC.method}, tC.path, tC.handler)
 
 			req, err := http.NewRequest(tC.method, "http://example.com"+tC.path, strings.NewReader(tC.body))
 			if err != nil {

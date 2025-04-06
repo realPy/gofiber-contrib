@@ -1,12 +1,12 @@
 package fibersentry
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/adaptor"
-	"github.com/gofiber/fiber/v2/utils"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/adaptor"
 )
 
 // New creates a new middleware handler
@@ -15,7 +15,7 @@ func New(config ...Config) fiber.Handler {
 	cfg := configDefault(config...)
 
 	// Return new handler
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 		// Convert fiber request to http request
 		r, err := adaptor.ConvertRequest(c, true)
 
@@ -27,7 +27,7 @@ func New(config ...Config) fiber.Handler {
 		hub := sentry.CurrentHub().Clone()
 		scope := hub.Scope()
 		scope.SetRequest(r)
-		scope.SetRequestBody(utils.CopyBytes(c.Body()))
+		scope.SetRequestBody(bytes.Clone(c.Body()))
 		c.Locals(hubKey, hub)
 
 		// Catch panics
@@ -53,6 +53,6 @@ func New(config ...Config) fiber.Handler {
 	}
 }
 
-func GetHubFromContext(ctx *fiber.Ctx) *sentry.Hub {
+func GetHubFromContext(ctx fiber.Ctx) *sentry.Hub {
 	return ctx.Locals(hubKey).(*sentry.Hub)
 }
